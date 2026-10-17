@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import { getQuestionPapers, createStudentAccount, getStudentsForTeacher, type QuestionPaper, type Profile } from '../../lib/supabase'
+import { LoadingState, Reveal, Stagger } from '../../ui/motion'
 
 export function TeacherDashboard() {
   const { profile } = useAuth()
@@ -52,74 +53,106 @@ export function TeacherDashboard() {
     }
   }
 
-  if (loading) return <div className="flex items-center justify-center h-64">Loading...</div>
+  if (loading) {
+    return (
+      <div>
+        <Reveal>
+          <h1 className="display" style={{ marginBottom: 4 }}>Dashboard</h1>
+          <p className="caption" style={{ marginBottom: 24 }}>Loading your papers and students…</p>
+        </Reveal>
+        <LoadingState rows={4} />
+      </div>
+    )
+  }
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-8">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Teacher Dashboard</h1>
-          <p className="text-gray-600 mt-1">Manage question papers and students</p>
+      <Reveal>
+        <div className="flex flex-wrap justify-between items-end gap-4" style={{ marginBottom: 24 }}>
+          <div>
+            <h1 className="display">Dashboard</h1>
+            <p className="caption" style={{ marginTop: 4 }}>Question papers and students</p>
+          </div>
+          <Link to="/paper/new" className="btn-primary">New Paper</Link>
         </div>
-        <Link to="/paper/new" className="btn-primary">Create Question Paper</Link>
-      </div>
+      </Reveal>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <section className="card">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Your Question Papers</h2>
-          {papers.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              <p>No question papers yet.</p>
-              <Link to="/paper/new" className="text-blue-600 hover:text-blue-500 font-medium mt-2 inline-block">Create your first paper</Link>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {papers.map((paper) => (
-                <Link key={paper.id} to={`/paper/${paper.id}`} className="block p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
-                  <h3 className="font-medium text-gray-900">{paper.title}</h3>
-                  <p className="text-sm text-gray-500 mt-1">
-                    {paper.marking_scheme.length} questions · Created {new Date(paper.created_at).toLocaleDateString()}
-                  </p>
-                </Link>
-              ))}
-            </div>
-          )}
-        </section>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Reveal delay={60}>
+          <section className="card">
+            <h2 className="title-2" style={{ marginBottom: 16 }}>Question Papers</h2>
+            {papers.length === 0 ? (
+              <div className="text-center" style={{ padding: '2rem 0' }}>
+                <p className="body-2" style={{ color: 'var(--ink-2)', marginBottom: 12 }}>No question papers yet.</p>
+                <Link to="/paper/new" className="btn-secondary">Create your first paper</Link>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <Stagger step={45}>
+                  {papers.map((paper) => (
+                    <Link
+                      key={paper.id}
+                      to={`/paper/${paper.id}`}
+                      className="row-press block"
+                      style={{ textDecoration: 'none', borderRadius: 'var(--r-md)', padding: '0.9rem 1rem', background: 'rgba(0,0,0,0.035)' }}
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <div style={{ minWidth: 0 }}>
+                          <h3 className="title-3" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{paper.title}</h3>
+                          <p className="caption" style={{ marginTop: 2 }}>
+                            {paper.marking_scheme.length} questions · {new Date(paper.created_at).toLocaleDateString()}
+                          </p>
+                        </div>
+                        <span aria-hidden="true" style={{ color: 'var(--ink-3)', fontSize: 20, flexShrink: 0 }}>›</span>
+                      </div>
+                    </Link>
+                  ))}
+                </Stagger>
+              </div>
+            )}
+          </section>
+        </Reveal>
 
-        <section className="card">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Students</h2>
-          <form onSubmit={handleCreateStudent} className="mb-6 p-4 bg-gray-50 rounded-lg">
-            <div className="flex gap-2">
-              <input
-                type="email"
-                placeholder="student@example.com"
-                value={newStudentEmail}
-                onChange={(e) => setNewStudentEmail(e.target.value)}
-                required
-                className="input flex-1"
-              />
-              <button type="submit" disabled={creatingStudent} className="btn-primary whitespace-nowrap">
-                {creatingStudent ? 'Adding...' : 'Add Student'}
-              </button>
-            </div>
-            {studentError && <p className="text-red-600 text-sm mt-2">{studentError}</p>}
-            {studentSuccess && <p className="text-green-600 text-sm mt-2">{studentSuccess}</p>}
-          </form>
-          {students.length === 0 ? (
-            <p className="text-gray-500 text-center py-4">No students linked yet. Add students above.</p>
-          ) : (
-            <div className="space-y-2">
-              {students.map((student) => (
-                <div key={student.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <div>
-                    <p className="font-medium text-gray-900">{student.full_name || student.id}</p>
-                  </div>
-                  <span className="badge badge-info">Student</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </section>
+        <Reveal delay={120}>
+          <section className="card">
+            <h2 className="title-2" style={{ marginBottom: 16 }}>Students</h2>
+            <form onSubmit={handleCreateStudent} className="card-inset" style={{ marginBottom: 16 }}>
+              <div className="flex gap-2">
+                <input
+                  type="email"
+                  placeholder="student@example.com"
+                  value={newStudentEmail}
+                  onChange={(e) => setNewStudentEmail(e.target.value)}
+                  required
+                  className="input"
+                  style={{ flex: 1 }}
+                  aria-label="Student email"
+                />
+                <button type="submit" disabled={creatingStudent} className="btn-primary" style={{ whiteSpace: 'nowrap' }}>
+                  {creatingStudent ? 'Adding…' : 'Add'}
+                </button>
+              </div>
+              {studentError && <div className="banner banner-error" style={{ marginTop: 10 }} role="alert">{studentError}</div>}
+              {studentSuccess && <div className="banner banner-success" style={{ marginTop: 10 }} role="status">{studentSuccess}</div>}
+            </form>
+            {students.length === 0 ? (
+              <p className="caption text-center" style={{ padding: '1rem 0' }}>No students linked yet. Add students above.</p>
+            ) : (
+              <div className="space-y-2">
+                <Stagger step={40}>
+                  {students.map((student) => (
+                    <div key={student.id} className="flex items-center justify-between" style={{ padding: '0.7rem 1rem', background: 'rgba(0,0,0,0.035)', borderRadius: 'var(--r-md)' }}>
+                      <p className="body-2" style={{ fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {student.full_name || student.id}
+                      </p>
+                      <span className="pill pill-info">Student</span>
+                    </div>
+                  ))}
+                </Stagger>
+              </div>
+            )}
+          </section>
+        </Reveal>
       </div>
     </div>
   )

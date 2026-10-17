@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from './AuthContext'
+import { AuthShell } from './AuthShell'
+import { Segmented } from '../../ui/motion'
 
 export function SignUp() {
   const [email, setEmail] = useState('')
@@ -31,96 +33,75 @@ export function SignUp() {
     }
   }
 
+  const isSuccess = error.includes('created')
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
+    <AuthShell title="Create account" subtitle="Start grading in a minute">
+      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        {error && <div className={`banner ${isSuccess ? 'banner-success' : 'banner-error'}`} role={isSuccess ? 'status' : 'alert'}>{error}</div>}
         <div>
-          <h2 className="text-center text-3xl font-bold text-gray-900">Create your account</h2>
+          <span className="label">I am a</span>
+          <Segmented
+            value={role}
+            onChange={setRole}
+            options={[
+              { value: 'teacher', label: 'Teacher' },
+              { value: 'student', label: 'Student' },
+            ]}
+          />
         </div>
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          {error && <div className={`p-4 rounded-lg text-sm ${error.includes('created') ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}`}>{error}</div>}
-          <div>
-            <label className="label">I am a</label>
-            <div className="flex space-x-4">
-              <label className="flex items-center space-x-2 cursor-pointer">
-                <input
-                  type="radio"
-                  value="teacher"
-                  checked={role === 'teacher'}
-                  onChange={() => setRole('teacher')}
-                  className="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
-                />
-                <span className="text-sm font-medium text-gray-700">Teacher</span>
-              </label>
-              <label className="flex items-center space-x-2 cursor-pointer">
-                <input
-                  type="radio"
-                  value="student"
-                  checked={role === 'student'}
-                  onChange={() => setRole('student')}
-                  className="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
-                />
-                <span className="text-sm font-medium text-gray-700">Student</span>
-              </label>
-            </div>
-          </div>
-          <div className="space-y-4">
-            <div>
-              <label htmlFor="email" className="label">Email address</label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                autoComplete="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="input"
-                placeholder="you@example.com"
-              />
-            </div>
-            <div>
-              <label htmlFor="password" className="label">Password</label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="new-password"
-                required
-                minLength={8}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="input"
-                placeholder="••••••••"
-              />
-            </div>
-            <div>
-              <label htmlFor="confirmPassword" className="label">Confirm password</label>
-              <input
-                id="confirmPassword"
-                name="confirmPassword"
-                type="password"
-                autoComplete="new-password"
-                required
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                className="input"
-                placeholder="••••••••"
-              />
-            </div>
-          </div>
-          <div>
-            <button type="submit" disabled={loading} className="btn-primary w-full">
-              {loading ? 'Creating account...' : 'Create account'}
-            </button>
-          </div>
-        </form>
-        <div className="text-center">
-          <p className="text-sm text-gray-600">
-            Already have an account? <Link to="/login" className="text-blue-600 hover:text-blue-500 font-medium">Sign in</Link>
-          </p>
+        <div>
+          <label htmlFor="email" className="label">Email</label>
+          <input
+            id="email"
+            name="email"
+            type="email"
+            autoComplete="email"
+            required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="input"
+            placeholder="you@example.com"
+          />
         </div>
+        <div>
+          <label htmlFor="password" className="label">Password</label>
+          <input
+            id="password"
+            name="password"
+            type="password"
+            autoComplete="new-password"
+            required
+            minLength={8}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="input"
+            placeholder="••••••••"
+          />
+        </div>
+        <div>
+          <label htmlFor="confirmPassword" className="label">Confirm password</label>
+          <input
+            id="confirmPassword"
+            name="confirmPassword"
+            type="password"
+            autoComplete="new-password"
+            required
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            className="input"
+            placeholder="••••••••"
+          />
+        </div>
+        <button type="submit" disabled={loading} className="btn-primary" style={{ width: '100%' }}>
+          {loading ? 'Creating account…' : 'Create account'}
+        </button>
+      </form>
+      <div className="text-center" style={{ marginTop: 20 }}>
+        <p className="caption">
+          Already have an account? <Link to="/login" style={{ color: 'var(--blue)', fontWeight: 600 }}>Sign in</Link>
+        </p>
       </div>
-    </div>
+    </AuthShell>
   )
 }

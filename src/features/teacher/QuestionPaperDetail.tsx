@@ -1,7 +1,15 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useAuth } from '../../features/auth/AuthContext'
-import { getQuestionPapers, getAnswerSheetsForTeacher, gradeAnswerSheet, updateTeacherGrade, type QuestionPaper, type AnswerSheetWithRelations, type GradeResult } from '../../lib/supabase'
+import { getQuestionPapers, getAnswerSheetsForTeacher, gradeAnswerSheet, gradeAnswerSheetLocal, checkLocalModel, updateTeacherGrade, type QuestionPaper, type AnswerSheetWithRelations, type GradeResult, type GradeProvider } from '../../lib/supabase'
+import { CountUp, LoadingState, Reveal, Sheet, Stagger } from '../../ui/motion'
+
+function statusPill(status: string) {
+  if (status === 'graded') return 'pill-success'
+  if (status === 'reviewed') return 'pill-info'
+  if (status === 'grading') return 'pill-warning'
+  return 'pill-neutral'
+}
 
 export function QuestionPaperDetail() {
   const { id } = useParams<{ id: string }>()
@@ -10,12 +18,16 @@ export function QuestionPaperDetail() {
   const [sheets, setSheets] = useState<AnswerSheetWithRelations[]>([])
   const [loading, setLoading] = useState(true)
   const [grading, setGrading] = useState<string | null>(null)
+  // Groq (cloud) option hidden for now — local MoE only.
+  const provider: GradeProvider = 'local'
+  const [localAvailable, setLocalAvailable] = useState<boolean | null>(null)
   const [reviewing, setReviewing] = useState<string | null>(null)
   const [reviewGrade, setReviewGrade] = useState<GradeResult | null>(null)
   const [reviewComment, setReviewComment] = useState('')
 
   useEffect(() => {
     loadData()
+    checkLocalModel().then(setLocalAvailable).catch(() => setLocalAvailable(false))
   }, [id])
 
   const loadData = async () => {
@@ -39,11 +51,15 @@ export function QuestionPaperDetail() {
   const handleGrade = async (sheetId: string) => {
     setGrading(sheetId)
     try {
-      await gradeAnswerSheet(sheetId)
+      if (provider === 'local') {
+        await gradeAnswerSheetLocal(sheetId)
+      } else {
+        await gradeAnswerSheet(sheetId)
+      }
       await loadData()
     } catch (err) {
       console.error(err)
-      alert('Grading failed')
+      alert(provider === 'local' ? 'Local grading failed — is the model server running on http://localhost:8000?' : 'Grading failed')
     } finally {
       setGrading(null)
     }
@@ -81,115 +97,151 @@ export function QuestionPaperDetail() {
     setReviewGrade({ ...reviewGrade, per_question: newPerQuestion, total })
   }
 
-  if (loading) return <div className="flex items-center justify-center h-64">Loading...</div>
-  if (!paper) return <div className="text-center py-12">Question paper not found</div>
+  if (loading) {
+    return (
+      <div>
+        <Reveal>
+          <h1 className="display" style={{ marginBottom: 4 }}>Paper</h1>
+          <p className="caption" style={{ marginBottom: 24 }}>Loading marking scheme and submissions…</p>
+        </Reveal>
+        <LoadingState rows={3} />
+      </div>
+    )
+  }
+  if (!paper) {
+    return (
+      <div className="text-center" style={{ padding: '4rem 0' }}>
+        <h1 className="title-2" style={{ marginBottom: 8 }}>Paper not found</h1>
+        <p className="caption" style={{ marginBottom: 16 }}>It may have been deleted.</p>
+        <Link to="/dashboard" className="btn-secondary">Back to Dashboard</Link>
+      </div>
+    )
+  }
+
+  const paperTotal = paper.marking_scheme.reduce((sum, q) => sum + q.max_points, 0)
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-8">
-        <div>
-          <Link to="/dashboard" className="btn-ghost mb-2 inline-block">← Back</Link>
-          <h1 className="text-3xl font-bold text-gray-900">{paper.title}</h1>
-          <p className="text-gray-600 mt-1">{paper.marking_scheme.length} questions · {sheets.length} submissions</p>
-        </div>
-      </div>
+      <Reveal>
+        <Link to="/dashboard" className="btn-ghost row-press" style={{ marginBottom: 8, paddingLeft: 0 }}>‹ Papers</Link>
+        <h1 className="display" style={{ marginBottom: 4 }}>{paper.title}</h1>
+        <p className="caption" style={{ marginBottom: 24 }}>{paper.marking_scheme.length} questions · {sheets.length} submissions</p>
+      </Reveal>
 
-      <div className="card mb-8">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">Marking Scheme</h2>
-        <div className="space-y-3">
-          {paper.marking_scheme.map((q) => (
-            <div key={q.question_id} className="p-4 bg-gray-50 rounded-lg">
-              <div className="flex justify-between items-start">
-                <div>
-                  <p className="font-mono text-sm text-gray-500">{q.question_id}</p>
-                  <p className="text-gray-700">{q.rubric_text}</p>
+      <Reveal delay={60}>
+        <div className="card" style={{ marginBottom: 24 }}>
+          <h2 className="title-2" style={{ marginBottom: 16 }}>Marking Scheme</h2>
+          <div className="space-y-2" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <Stagger step={40}>
+              {paper.marking_scheme.map((q) => (
+                <div key={q.question_id} className="card-inset">
+                  <div className="flex justify-between items-start gap-3">
+                    <div style={{ minWidth: 0 }}>
+                      <p className="mono caption">{q.question_id}</p>
+                      <p className="body-2" style={{ marginTop: 2 }}>{q.rubric_text}</p>
+                    </div>
+                    <span className="pill pill-info" style={{ flexShrink: 0 }}>{q.max_points} pts</span>
+                  </div>
                 </div>
-                <span className="badge badge-info">{q.max_points} pts</span>
-              </div>
+              ))}
+            </Stagger>
+          </div>
+        </div>
+      </Reveal>
+
+      <Reveal delay={120}>
+        <div className="card">
+          <div className="flex flex-wrap justify-between items-center gap-4" style={{ marginBottom: 16 }}>
+            <h2 className="title-2">Submissions</h2>
+            <div className="flex items-center gap-2">
+              <span className="pill pill-neutral">Local MoE</span>
+              {localAvailable === true && <span className="pill pill-success">local online</span>}
+              {localAvailable === false && <span className="pill pill-warning">local offline</span>}
             </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="card">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">Submissions</h2>
-        {sheets.length === 0 ? (
-          <p className="text-gray-500 text-center py-8">No submissions yet</p>
-        ) : (
-          <div className="space-y-4">
-            {sheets.map((sheet) => (
-              <div key={sheet.id} className="border border-gray-200 rounded-lg p-4">
-                <div className="flex flex-wrap items-center justify-between gap-4">
-                  <div className="flex items-center gap-4">
-                    <span className="font-medium text-gray-900">Student: {sheet.profiles?.full_name || sheet.student_id}</span>
-                    <span className={`badge ${sheet.status === 'graded' ? 'badge-success' : sheet.status === 'grading' ? 'badge-warning' : sheet.status === 'reviewed' ? 'badge-info' : 'badge-warning'}`}>
-                      {sheet.status}
-                    </span>
-                    {sheet.final_grade && (
-                      <span className="badge badge-success">
-                        Final: {sheet.final_grade.total}/{paper.marking_scheme.reduce((sum, q) => sum + q.max_points, 0)}
+          </div>
+          {sheets.length === 0 ? (
+            <p className="caption text-center" style={{ padding: '2rem 0' }}>No submissions yet — share the paper link with students.</p>
+          ) : (
+            <div className="space-y-4" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {sheets.map((sheet) => (
+                <div key={sheet.id} className="card-inset">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="body-2" style={{ fontWeight: 600 }}>{sheet.profiles?.full_name || sheet.student_id}</span>
+                      <span className={`pill ${statusPill(sheet.status)}`} style={{ textTransform: 'capitalize' }}>
+                        {sheet.status}
                       </span>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {sheet.status === 'pending' && (
-                      <button
-                        onClick={() => handleGrade(sheet.id)}
-                        disabled={grading === sheet.id}
-                        className="btn-primary"
-                      >
-                        {grading === sheet.id ? 'Grading...' : 'Grade with AI'}
-                      </button>
-                    )}
-                    {(sheet.status === 'graded' || sheet.status === 'reviewed') && (
-                      <button
-                        onClick={() => openReview(sheet)}
-                        disabled={reviewing === sheet.id}
-                        className="btn-secondary"
-                      >
-                        {sheet.status === 'reviewed' ? 'Review/Edit' : 'Review Grade'}
-                      </button>
-                    )}
-                  </div>
-                </div>
-
-                {(sheet.status === 'graded' || sheet.status === 'reviewed') && sheet.ai_grade && (
-                  <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-                    <h4 className="font-medium text-gray-900 mb-2">AI Grade Breakdown</h4>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-sm">
-                      {sheet.ai_grade.per_question.map((q) => (
-                        <div key={q.question_id} className="p-2 bg-white rounded">
-                          <p className="font-mono text-gray-500">{q.question_id}</p>
-                          <p className="font-medium">{q.score}/{q.max_points}</p>
-                          <p className="text-gray-600 line-clamp-2">{q.rationale}</p>
-                        </div>
-                      ))}
-                      <div className="md:col-span-3 font-bold text-lg text-blue-600">
-                        Total: {sheet.ai_grade.total}/{paper.marking_scheme.reduce((sum, q) => sum + q.max_points, 0)}
-                      </div>
+                      {sheet.final_grade && (
+                        <span className="pill pill-success">
+                          <CountUp value={sheet.final_grade.total} />/{paperTotal}
+                        </span>
+                      )}
+                      {sheet.grading_provider && (
+                        <span className="pill pill-neutral">
+                          {sheet.grading_provider === 'local' ? 'Local MoE' : 'Cloud'}
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {sheet.status === 'pending' && (
+                        <button
+                          onClick={() => handleGrade(sheet.id)}
+                          disabled={grading === sheet.id}
+                          className="btn-primary"
+                        >
+                          {grading === sheet.id ? 'Grading…' : 'Grade · Local'}
+                        </button>
+                      )}
+                      {(sheet.status === 'graded' || sheet.status === 'reviewed') && (
+                        <button
+                          onClick={() => openReview(sheet)}
+                          disabled={reviewing === sheet.id}
+                          className="btn-secondary"
+                        >
+                          {sheet.status === 'reviewed' ? 'Review / Edit' : 'Review'}
+                        </button>
+                      )}
                     </div>
                   </div>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+
+                  {(sheet.status === 'graded' || sheet.status === 'reviewed') && sheet.ai_grade && (
+                    <div style={{ marginTop: 12 }}>
+                      <p className="label">AI breakdown</p>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-2" style={{ marginTop: 6 }}>
+                        {sheet.ai_grade.per_question.map((q) => (
+                          <div key={q.question_id} className="card-inset" style={{ background: '#fff' }}>
+                            <p className="mono caption">{q.question_id}</p>
+                            <p className="title-3"><CountUp value={q.score} />/{q.max_points}</p>
+                            <p className="caption" style={{ marginTop: 4, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{q.rationale}</p>
+                          </div>
+                        ))}
+                      </div>
+                      <p className="title-2" style={{ color: 'var(--blue)', marginTop: 10 }}>
+                        <CountUp value={sheet.ai_grade.total} />/{paperTotal}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </Reveal>
 
       {reviewing && reviewGrade && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl max-w-2xl w-full max-h-[80vh] overflow-y-auto">
-            <div className="p-6 border-b border-gray-200 flex justify-between items-center">
-              <h2 className="text-xl font-bold">Review & Override Grade</h2>
-              <button onClick={closeReview} className="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+        <Sheet onClose={closeReview} labelledBy="review-title">
+          <div style={{ padding: '0.25rem 1.5rem 1.5rem' }}>
+            <div className="flex justify-between items-center" style={{ padding: '0.75rem 0 1rem' }}>
+              <h2 id="review-title" className="title-2">Review Grade</h2>
+              <button onClick={closeReview} className="btn-ghost" aria-label="Close" style={{ fontSize: 22, padding: '0.2rem 0.6rem' }}>×</button>
             </div>
-            <div className="p-6 space-y-4">
+            <div className="space-y-3" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               {reviewGrade.per_question.map((q, i) => (
-                <div key={q.question_id} className="border border-gray-200 rounded-lg p-4">
-                  <div className="flex justify-between items-start mb-2">
+                <div key={q.question_id} className="card-inset" style={{ background: '#fff' }}>
+                  <div className="flex justify-between items-center gap-3" style={{ marginBottom: 6 }}>
                     <div>
-                      <p className="font-mono text-sm text-gray-500">{q.question_id}</p>
-                      <p className="text-gray-700 text-sm">Max: {q.max_points} pts</p>
+                      <p className="mono caption">{q.question_id}</p>
+                      <p className="caption">Max {q.max_points} pts</p>
                     </div>
                     <input
                       type="number"
@@ -197,31 +249,35 @@ export function QuestionPaperDetail() {
                       max={q.max_points}
                       value={q.score}
                       onChange={(e) => updateReviewScore(i, parseInt(e.target.value) || 0)}
-                      className="w-20 input text-center font-mono"
+                      className="input mono text-center"
+                      style={{ width: 84, fontSize: '1.1rem', fontWeight: 700 }}
+                      aria-label={`Score for ${q.question_id}`}
                     />
                   </div>
-                  <p className="text-gray-600 text-sm">{q.rationale}</p>
+                  <p className="caption">{q.rationale}</p>
                 </div>
               ))}
-              <div className="border-t pt-4">
-                <h3 className="font-bold text-lg">Total: {reviewGrade.total}/{paper.marking_scheme.reduce((sum, q) => sum + q.max_points, 0)}</h3>
-              </div>
+              <h3 className="title-2" style={{ paddingTop: 8 }}>
+                <CountUp value={reviewGrade.total} />/{paperTotal}
+              </h3>
               <div>
-                <label className="label">Teacher Comment</label>
+                <label className="label" htmlFor="teacher-comment">Teacher comment</label>
                 <textarea
+                  id="teacher-comment"
                   value={reviewComment}
                   onChange={(e) => setReviewComment(e.target.value)}
-                  className="input min-h-[100px]"
-                  placeholder="Optional feedback for student..."
+                  className="input"
+                  style={{ minHeight: 90 }}
+                  placeholder="Feedback for the student…"
                 />
               </div>
-              <div className="flex justify-end gap-3 pt-4 border-t">
+              <div className="flex justify-end gap-3" style={{ paddingTop: 8 }}>
                 <button onClick={closeReview} className="btn-secondary">Cancel</button>
                 <button onClick={saveReview} className="btn-primary">Save Override</button>
               </div>
             </div>
           </div>
-        </div>
+        </Sheet>
       )}
     </div>
   )

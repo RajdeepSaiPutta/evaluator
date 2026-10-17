@@ -2,72 +2,417 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ————————————————————————————————
+   Apple-style design foundations
+   System type, translucent materials, instant press feedback,
+   springs (via ui/motion), reduced-motion cross-fades.
+   ———————————————————————————————— */
+
+:root {
+  --bg: #f5f5f7;
+  --surface: rgba(255, 255, 255, 0.72);
+  --surface-solid: #ffffff;
+  --ink: #1d1d1f;
+  --ink-2: #6e6e73;
+  --ink-3: #aeaeb2;
+  --blue: #0071e3;
+  --blue-dark: #0058b0;
+  --green: #1d8127;
+  --green-bg: #e5f4e6;
+  --amber: #9a5b00;
+  --amber-bg: #fdf0d7;
+  --red: #d70015;
+  --red-bg: #fde8e9;
+  --blue-bg: #e3f0fd;
+  --hairline: rgba(0, 0, 0, 0.09);
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.04), 0 8px 24px rgba(0, 0, 0, 0.06);
+  --shadow-pop: 0 2px 6px rgba(0, 0, 0, 0.08), 0 24px 64px rgba(0, 0, 0, 0.18);
+  --r-lg: 20px;
+  --r-md: 14px;
+  --r-sm: 10px;
+}
+
 * {
   box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
   margin: 0;
   min-height: 100vh;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  font-size: 100%;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 #root {
   min-height: 100vh;
 }
 
-input[type="file"] {
-  display: none;
+/* —— Typography: tracking is size-specific, never fixed —— */
+.display {
+  font-weight: 700;
+  font-size: clamp(1.75rem, 4vw, 2.5rem);
+  line-height: 1.08;
+  letter-spacing: -0.022em;
+  font-optical-sizing: auto;
 }
 
+.title-2 {
+  font-weight: 700;
+  font-size: 1.375rem;
+  line-height: 1.2;
+  letter-spacing: -0.012em;
+}
+
+.title-3 {
+  font-weight: 600;
+  font-size: 1.0625rem;
+  line-height: 1.35;
+  letter-spacing: -0.005em;
+}
+
+.body-2 {
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+
+.caption {
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  letter-spacing: 0.004em;
+  color: var(--ink-2);
+}
+
+.mono {
+  font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+}
+
+/* —— Translucent chrome: content scrolls under —— */
+.toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background: rgba(251, 251, 253, 0.72);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  transition: box-shadow 200ms ease;
+}
+
+.toolbar[data-scrolled='true'] {
+  /* scroll edge effect: soft shadow where chrome meets content, no hard divider */
+  box-shadow: 0 8px 24px -12px rgba(0, 0, 0, 0.18);
+}
+
+/* —— Buttons: feedback on press-down, instant —— */
 .btn {
-  @apply px-4 py-2 rounded-lg font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
+  @apply inline-flex items-center justify-center gap-2 font-medium select-none focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
+  border-radius: 999px;
+  padding: 0.55rem 1.25rem;
+  font-size: 0.9375rem;
+  line-height: 1.3;
+  transition: transform 100ms ease-out, background-color 150ms ease, box-shadow 150ms ease;
+}
+
+.btn:active:not(:disabled) {
+  transform: scale(0.97);
 }
 
 .btn-primary {
-  @apply btn bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500;
+  @apply btn;
+  background: var(--blue);
+  color: #fff;
+  box-shadow: 0 1px 2px rgba(0, 113, 227, 0.4);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: var(--blue-dark);
 }
 
 .btn-secondary {
-  @apply btn bg-gray-100 text-gray-900 hover:bg-gray-200 focus:ring-gray-500;
+  @apply btn;
+  background: rgba(0, 0, 0, 0.055);
+  color: var(--ink);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: rgba(0, 0, 0, 0.09);
 }
 
 .btn-danger {
-  @apply btn bg-red-600 text-white hover:bg-red-700 focus:ring-red-500;
+  @apply btn;
+  background: var(--red);
+  color: #fff;
 }
 
 .btn-ghost {
-  @apply btn bg-transparent text-gray-700 hover:bg-gray-100 focus:ring-gray-500;
+  @apply btn;
+  background: transparent;
+  color: var(--blue);
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
 }
 
+.btn-ghost:hover:not(:disabled) {
+  background: rgba(0, 113, 227, 0.08);
+}
+
+/* —— Inputs —— */
 .input {
-  @apply w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent;
+  @apply w-full;
+  border-radius: var(--r-sm);
+  border: 1px solid rgba(0, 0, 0, 0.14);
+  background: rgba(255, 255, 255, 0.9);
+  padding: 0.6rem 0.9rem;
+  font-size: 0.9375rem;
+  line-height: 1.4;
+  color: var(--ink);
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+.input::placeholder {
+  color: var(--ink-3);
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.18);
 }
 
 .label {
-  @apply block text-sm font-medium text-gray-700 mb-1;
+  @apply block mb-1;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--ink-2);
+  letter-spacing: 0.004em;
 }
 
+/* —— Cards: light translucent surface, never stacked on another —— */
 .card {
-  @apply bg-white rounded-xl shadow-sm border border-gray-200 p-6;
+  background: var(--surface-solid);
+  border-radius: var(--r-lg);
+  border: 1px solid var(--hairline);
+  box-shadow: var(--shadow-card);
+  padding: 1.5rem;
 }
 
-.badge {
-  @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+.card-inset {
+  background: rgba(0, 0, 0, 0.035);
+  border-radius: var(--r-md);
+  padding: 1rem;
 }
 
-.badge-success {
-  @apply badge bg-green-100 text-green-800;
+/* —— Pills / badges —— */
+.pill {
+  @apply inline-flex items-center gap-1;
+  border-radius: 999px;
+  padding: 0.2rem 0.7rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  line-height: 1.5;
+  white-space: nowrap;
 }
 
-.badge-warning {
-  @apply badge bg-yellow-100 text-yellow-800;
+.pill-success { background: var(--green-bg); color: var(--green); }
+.pill-warning { background: var(--amber-bg); color: var(--amber); }
+.pill-error { background: var(--red-bg); color: var(--red); }
+.pill-info { background: var(--blue-bg); color: var(--blue-dark); }
+.pill-neutral { background: rgba(0, 0, 0, 0.06); color: var(--ink-2); }
+
+/* legacy badge aliases (kept so existing classNames keep working) */
+.badge { @apply pill; }
+.badge-success { @apply pill-success; }
+.badge-warning { @apply pill-warning; }
+.badge-error { @apply pill-error; }
+.badge-info { @apply pill-info; }
+
+/* —— List rows: 1:1 press feedback, chevron wayfinding —— */
+.row-press {
+  transition: transform 100ms ease-out, background-color 150ms ease;
 }
 
-.badge-error {
-  @apply badge bg-red-100 text-red-800;
+.row-press:active {
+  transform: scale(0.99);
 }
 
-.badge-info {
-  @apply badge bg-blue-100 text-blue-800;
+/* —— Segmented control (the Apple idiom for 2-3 exclusive options) —— */
+.segmented {
+  display: inline-flex;
+  background: rgba(0, 0, 0, 0.06);
+  border-radius: 999px;
+  padding: 2px;
+  gap: 2px;
+}
+
+.segmented button {
+  border: 0;
+  background: transparent;
+  border-radius: 999px;
+  padding: 0.35rem 0.95rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--ink-2);
+  cursor: pointer;
+  transition: background-color 150ms ease, color 150ms ease, box-shadow 150ms ease, transform 100ms ease-out;
+}
+
+.segmented button:active {
+  transform: scale(0.96);
+}
+
+.segmented button[aria-pressed='true'] {
+  background: #fff;
+  color: var(--ink);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
+}
+
+/* —— Sheet (bottom drawer): slides up in, dismisses down —— */
+.scrim {
+  position: fixed;
+  inset: 0;
+  background: rgba(20, 20, 24, 0.4);
+  z-index: 50;
+}
+
+.sheet {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 51;
+  margin: 0 auto;
+  max-width: 44rem;
+  max-height: 88vh;
+  overflow-y: auto;
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border-radius: 22px 22px 0 0;
+  box-shadow: var(--shadow-pop);
+}
+
+.sheet-grabber {
+  width: 36px;
+  height: 5px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.22);
+  margin: 0.6rem auto 0;
+}
+
+/* —— Skeleton shimmer (status feedback while loading) —— */
+@keyframes shimmer {
+  0% { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+
+.skeleton {
+  border-radius: var(--r-sm);
+  background: linear-gradient(90deg, rgba(0,0,0,0.06) 25%, rgba(0,0,0,0.11) 50%, rgba(0,0,0,0.06) 75%);
+  background-size: 800px 100%;
+  animation: shimmer 1.4s ease infinite;
+}
+
+/* —— Banners: status / warning / error feedback kinds —— */
+.banner {
+  border-radius: var(--r-md);
+  padding: 0.8rem 1rem;
+  font-size: 0.875rem;
+  line-height: 1.45;
+}
+
+.banner-error { background: var(--red-bg); color: var(--red); }
+.banner-success { background: var(--green-bg); color: var(--green); }
+.banner-info { background: var(--blue-bg); color: var(--blue-dark); }
+
+/* —— Thumbnails —— */
+.thumb {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: var(--r-md);
+  overflow: hidden;
+  border: 1px solid var(--hairline);
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.thumb-remove {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  border: 0;
+  background: rgba(20, 20, 24, 0.62);
+  backdrop-filter: blur(8px);
+  color: #fff;
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 100ms ease-out, background-color 150ms ease;
+}
+
+.thumb-remove:active {
+  transform: scale(0.9);
+}
+
+/* —— Floating role pill —— */
+.role-pill {
+  position: fixed;
+  right: 1.25rem;
+  bottom: 1.25rem;
+  z-index: 45;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: rgba(255, 255, 255, 0.78);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid var(--hairline);
+  box-shadow: var(--shadow-pop);
+  border-radius: 999px;
+  padding: 0.5rem 0.5rem 0.5rem 1rem;
+}
+
+/* —— Reduced motion: cross-fade, never slide/spring —— */
+@media (prefers-reduced-motion: reduce) {
+  .skeleton {
+    animation: none;
+    background: rgba(0, 0, 0, 0.07);
+  }
+
+  .btn, .btn-primary, .btn-secondary, .btn-danger, .btn-ghost,
+  .row-press, .segmented button, .thumb-remove, .toolbar, .input {
+    transition: opacity 150ms ease, background-color 150ms ease !important;
+    transform: none !important;
+  }
+
+  .btn:active:not(:disabled), .row-press:active, .segmented button:active {
+    transform: none !important;
+    opacity: 0.75;
+  }
+}
+
+@media (prefers-contrast: more) {
+  .card, .toolbar {
+    border: 1px solid rgba(0, 0, 0, 0.35);
+  }
 }

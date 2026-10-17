@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from './AuthContext'
+import { AuthShell } from './AuthShell'
 
 export function ResetPassword() {
   const [password, setPassword] = useState('')
@@ -52,90 +53,76 @@ export function ResetPassword() {
   }
 
   if (step === 'request') {
+    const isSent = error.includes('sent')
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-md w-full space-y-8">
+      <AuthShell title="Reset password" subtitle="We'll email you a reset link">
+        <form onSubmit={handleRequestReset} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {error && <div className={`banner ${isSent ? 'banner-success' : 'banner-error'}`} role={isSent ? 'status' : 'alert'}>{error}</div>}
           <div>
-            <h2 className="text-center text-3xl font-bold text-gray-900">Reset your password</h2>
+            <label htmlFor="email" className="label">Email</label>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              autoComplete="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="input"
+              placeholder="you@example.com"
+            />
           </div>
-          <form className="mt-8 space-y-6" onSubmit={handleRequestReset}>
-            {error && <div className={`p-4 rounded-lg text-sm ${error.includes('sent') ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}`}>{error}</div>}
-            <div>
-              <label htmlFor="email" className="label">Email address</label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                autoComplete="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="input"
-                placeholder="you@example.com"
-              />
-            </div>
-            <div>
-              <button type="submit" disabled={loading} className="btn-primary w-full">
-                {loading ? 'Sending...' : 'Send reset link'}
-              </button>
-            </div>
-          </form>
-          <div className="text-center">
-            <p className="text-sm text-gray-600">
-              <Link to="/login" className="text-blue-600 hover:text-blue-500 font-medium">Back to sign in</Link>
-            </p>
-          </div>
+          <button type="submit" disabled={loading} className="btn-primary" style={{ width: '100%' }}>
+            {loading ? 'Sending…' : 'Send reset link'}
+          </button>
+        </form>
+        <div className="text-center" style={{ marginTop: 20 }}>
+          <p className="caption">
+            <Link to="/login" style={{ color: 'var(--blue)', fontWeight: 600 }}>Back to sign in</Link>
+          </p>
         </div>
-      </div>
+      </AuthShell>
     )
   }
 
+  const isUpdated = error.includes('updated')
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
+    <AuthShell title="New password" subtitle="Choose something memorable">
+      <form onSubmit={handleReset} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        {error && <div className={`banner ${isUpdated ? 'banner-success' : 'banner-error'}`} role={isUpdated ? 'status' : 'alert'}>{error}</div>}
         <div>
-          <h2 className="text-center text-3xl font-bold text-gray-900">Set new password</h2>
+          <label htmlFor="password" className="label">New password</label>
+          <input
+            id="password"
+            name="password"
+            type="password"
+            autoComplete="new-password"
+            required
+            minLength={8}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="input"
+            placeholder="••••••••"
+          />
         </div>
-        <form className="mt-8 space-y-6" onSubmit={handleReset}>
-          {error && <div className={`p-4 rounded-lg text-sm ${error.includes('updated') ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}`}>{error}</div>}
-          <div className="space-y-4">
-            <div>
-              <label htmlFor="password" className="label">New password</label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="new-password"
-                required
-                minLength={8}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="input"
-                placeholder="••••••••"
-              />
-            </div>
-            <div>
-              <label htmlFor="confirmPassword" className="label">Confirm new password</label>
-              <input
-                id="confirmPassword"
-                name="confirmPassword"
-                type="password"
-                autoComplete="new-password"
-                required
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                className="input"
-                placeholder="••••••••"
-              />
-            </div>
-          </div>
-          <div>
-            <button type="submit" disabled={loading} className="btn-primary w-full">
-              {loading ? 'Updating...' : 'Update password'}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+        <div>
+          <label htmlFor="confirmPassword" className="label">Confirm new password</label>
+          <input
+            id="confirmPassword"
+            name="confirmPassword"
+            type="password"
+            autoComplete="new-password"
+            required
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            className="input"
+            placeholder="••••••••"
+          />
+        </div>
+        <button type="submit" disabled={loading} className="btn-primary" style={{ width: '100%' }}>
+          {loading ? 'Updating…' : 'Update password'}
+        </button>
+      </form>
+    </AuthShell>
   )
 }

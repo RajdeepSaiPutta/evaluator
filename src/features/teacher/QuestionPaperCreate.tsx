@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../features/auth/AuthContext'
 import { createQuestionPaper, type MarkingSchemeQuestion } from '../../lib/supabase'
+import { Reveal } from '../../ui/motion'
 
 export function QuestionPaperCreate() {
   const { profile } = useAuth()
@@ -30,9 +31,19 @@ export function QuestionPaperCreate() {
     setQuestions(questions.filter((_, i) => i !== index))
   }
 
+  const ACCEPTED_TYPES = ".png,.jpg,.jpeg,.webp,.pdf,.doc,.docx,.ppt,.pptx"
+  const IMAGE_EXTS = new Set(["png", "jpg", "jpeg", "webp", "gif", "bmp"])
+
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
-      setImages(Array.from(e.target.files))
+      const files = Array.from(e.target.files)
+      const oversized = files.filter(f => f.size > 20 * 1024 * 1024)
+      if (oversized.length > 0) {
+        setError(`Files too large (max 20MB): ${oversized.map(f => f.name).join(", ")}`)
+        return
+      }
+      setError("")
+      setImages(files)
     }
   }
 
@@ -40,11 +51,11 @@ export function QuestionPaperCreate() {
     e.preventDefault()
     if (!profile) return
     if (!title.trim()) {
-      setError('Title is required')
+      setError('Give the paper a title first.')
       return
     }
     if (questions.some(q => q.max_points <= 0)) {
-      setError('All questions must have max points > 0')
+      setError('Every question needs max points above 0.')
       return
     }
     setError('')
@@ -59,107 +70,125 @@ export function QuestionPaperCreate() {
     }
   }
 
+  const totalPoints = questions.reduce((s, q) => s + (q.max_points || 0), 0)
+
   return (
-    <div className="max-w-4xl mx-auto">
-      <h1 className="text-3xl font-bold text-gray-900 mb-8">Create Question Paper</h1>
-      <form onSubmit={handleSubmit} className="card space-y-8">
-        {error && <div className="bg-red-50 text-red-600 p-4 rounded-lg">{error}</div>}
+    <div style={{ maxWidth: '52rem', margin: '0 auto' }}>
+      <Reveal>
+        <h1 className="display" style={{ marginBottom: 4 }}>New Paper</h1>
+        <p className="caption" style={{ marginBottom: 24 }}>
+          {questions.length} question{questions.length === 1 ? '' : 's'} · {totalPoints} points total
+        </p>
+      </Reveal>
+      <Reveal delay={60}>
+        <form onSubmit={handleSubmit} className="card" style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
+          {error && <div className="banner banner-error" role="alert">{error}</div>}
 
-        <div>
-          <label htmlFor="title" className="label">Paper Title</label>
-          <input
-            id="title"
-            type="text"
-            required
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            className="input"
-            placeholder="e.g., Midterm Exam - Mathematics"
-          />
-        </div>
-
-        <div>
-          <label className="label">Marking Scheme</label>
-          <div className="space-y-4">
-            {questions.map((q, i) => (
-              <div key={q.question_id} className="border border-gray-200 rounded-lg p-4">
-                <div className="flex justify-between items-center mb-3">
-                  <h3 className="font-medium text-gray-900">Question {i + 1}</h3>
-                  {questions.length > 1 && (
-                    <button type="button" onClick={() => removeQuestion(i)} className="btn-ghost text-red-600 hover:bg-red-50">Remove</button>
-                  )}
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
-                  <div>
-                    <label className="label">Question ID</label>
-                    <input
-                      type="text"
-                      value={q.question_id}
-                      onChange={(e) => updateQuestion(i, 'question_id', e.target.value)}
-                      className="input font-mono"
-                    />
-                  </div>
-                  <div>
-                    <label className="label">Max Points</label>
-                    <input
-                      type="number"
-                      min="1"
-                      value={q.max_points}
-                      onChange={(e) => updateQuestion(i, 'max_points', parseInt(e.target.value) || 0)}
-                      className="input"
-                    />
-                  </div>
-                </div>
-                <div className="mb-3">
-                  <label className="label">Rubric / Grading Criteria</label>
-                  <textarea
-                    value={q.rubric_text}
-                    onChange={(e) => updateQuestion(i, 'rubric_text', e.target.value)}
-                    className="input min-h-[80px] font-mono text-sm"
-                    placeholder="Describe how to grade this question..."
-                  />
-                </div>
-                <div>
-                  <label className="label">Model Answer</label>
-                  <textarea
-                    value={q.model_answer}
-                    onChange={(e) => updateQuestion(i, 'model_answer', e.target.value)}
-                    className="input min-h-[80px] font-mono text-sm"
-                    placeholder="The expected correct answer..."
-                  />
-                </div>
-              </div>
-            ))}
-            <button type="button" onClick={addQuestion} className="btn-secondary">+ Add Question</button>
+          <div>
+            <label htmlFor="title" className="label">Paper title</label>
+            <input
+              id="title"
+              type="text"
+              required
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="input title-3"
+              placeholder="e.g. Midterm Exam — Mathematics"
+            />
           </div>
-        </div>
 
-        <div>
-          <label className="label">Question Paper Images</label>
-          <input
-            type="file"
-            id="images"
-            accept="image/*"
-            multiple
-            onChange={handleImageChange}
-            className="input"
-          />
-          {images.length > 0 && (
-            <div className="mt-2 flex flex-wrap gap-2">
-              {images.map((img, i) => (
-                <span key={i} className="badge badge-info">{img.name}</span>
+          <div>
+            <span className="label">Marking scheme</span>
+            <div className="space-y-4" style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: 8 }}>
+              {questions.map((q, i) => (
+                <div key={q.question_id} className="card-inset">
+                  <div className="flex justify-between items-center" style={{ marginBottom: 12 }}>
+                    <h3 className="title-3">Question {i + 1}</h3>
+                    {questions.length > 1 && (
+                      <button type="button" onClick={() => removeQuestion(i)} className="btn-ghost" style={{ color: 'var(--red)', padding: '0.3rem 0.6rem', fontSize: '0.8125rem' }}>Remove</button>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4" style={{ marginBottom: 12 }}>
+                    <div>
+                      <label className="label">Question ID</label>
+                      <input
+                        type="text"
+                        value={q.question_id}
+                        onChange={(e) => updateQuestion(i, 'question_id', e.target.value)}
+                        className="input mono"
+                      />
+                    </div>
+                    <div>
+                      <label className="label">Max points</label>
+                      <input
+                        type="number"
+                        min="1"
+                        value={q.max_points}
+                        onChange={(e) => updateQuestion(i, 'max_points', parseInt(e.target.value) || 0)}
+                        className="input"
+                      />
+                    </div>
+                  </div>
+                  <div style={{ marginBottom: 12 }}>
+                    <label className="label">Rubric — how to grade this question</label>
+                    <textarea
+                      value={q.rubric_text}
+                      onChange={(e) => updateQuestion(i, 'rubric_text', e.target.value)}
+                      className="input mono"
+                      style={{ minHeight: 80, fontSize: '0.875rem' }}
+                      placeholder="What earns each mark…"
+                    />
+                  </div>
+                  <div>
+                    <label className="label">Model answer</label>
+                    <textarea
+                      value={q.model_answer}
+                      onChange={(e) => updateQuestion(i, 'model_answer', e.target.value)}
+                      className="input mono"
+                      style={{ minHeight: 80, fontSize: '0.875rem' }}
+                      placeholder="The expected correct answer…"
+                    />
+                  </div>
+                </div>
               ))}
+              <button type="button" onClick={addQuestion} className="btn-secondary" style={{ alignSelf: 'flex-start' }}>+ Add Question</button>
             </div>
-          )}
-        </div>
+          </div>
 
-        <div className="flex justify-end space-x-4 pt-4 border-t border-gray-200">
-          <button type="button" onClick={() => navigate(-1)} className="btn-secondary">Cancel</button>
-          <button type="submit" disabled={loading} className="btn-primary">
-            {loading ? 'Creating...' : 'Create Question Paper'}
-          </button>
-        </div>
-      </form>
+          <div>
+            <label className="label" htmlFor="images">Paper files — images, PDF, Word or PowerPoint</label>
+            <input
+              type="file"
+              id="images"
+              accept={ACCEPTED_TYPES}
+              multiple
+              onChange={handleImageChange}
+              className="input"
+            />
+            <p className="caption" style={{ marginTop: 6 }}>PNG, JPG, WEBP, PDF, DOC, DOCX, PPT, PPTX — up to 20MB each</p>
+            {images.length > 0 && (
+              <div className="mt-2 flex flex-wrap gap-2" style={{ marginTop: 10 }}>
+                {images.map((f, i) => {
+                  const ext = f.name.split(".").pop()?.toLowerCase() || ""
+                  const isImage = IMAGE_EXTS.has(ext)
+                  return (
+                    <span key={i} className={`pill ${isImage ? "pill-info" : "pill-warning"}`} title={`${(f.size / 1024).toFixed(0)} KB`}>
+                      {f.name}
+                    </span>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+
+          <div className="flex justify-end gap-3" style={{ paddingTop: 16, borderTop: '1px solid var(--hairline)' }}>
+            <button type="button" onClick={() => navigate(-1)} className="btn-secondary">Cancel</button>
+            <button type="submit" disabled={loading} className="btn-primary">
+              {loading ? 'Creating…' : 'Create Paper'}
+            </button>
+          </div>
+        </form>
+      </Reveal>
     </div>
   )
 }

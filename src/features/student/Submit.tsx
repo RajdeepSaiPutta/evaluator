@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
-import { submitAnswerSheet, type QuestionPaper } from '../../lib/supabase'
-import { supabase } from '../../lib/supabase'
+import { submitAnswerSheet, supabase, type QuestionPaper } from '../../lib/supabase'
 import { openDB, DBSchema, IDBPDatabase } from 'idb'
+import { LoadingState, Reveal } from '../../ui/motion'
 
 interface DraftDBSchema extends DBSchema {
   drafts: {
@@ -129,7 +129,7 @@ export function StudentSubmit() {
     e.preventDefault()
     if (!paperId || !profile) return
     if (images.length === 0) {
-      setError('Please select at least one image')
+      setError('Add at least one photo of your answer sheet.')
       return
     }
     setError('')
@@ -146,60 +146,86 @@ export function StudentSubmit() {
     }
   }
 
-  if (loading) return <div className="flex items-center justify-center h-64">Loading...</div>
-  if (!paper) return <div className="text-center py-12">Question paper not found</div>
+  if (loading) {
+    return (
+      <div>
+        <Reveal>
+          <h1 className="display" style={{ marginBottom: 4 }}>Submit</h1>
+          <p className="caption" style={{ marginBottom: 24 }}>Loading paper…</p>
+        </Reveal>
+        <LoadingState rows={2} />
+      </div>
+    )
+  }
+  if (!paper) {
+    return (
+      <div className="text-center" style={{ padding: '4rem 0' }}>
+        <h1 className="title-2" style={{ marginBottom: 8 }}>Paper not found</h1>
+        <p className="caption">Check the link your teacher shared.</p>
+      </div>
+    )
+  }
 
   return (
-    <div className="max-w-3xl mx-auto">
-      <h1 className="text-3xl font-bold text-gray-900 mb-2">Submit Answer Sheet</h1>
-      <p className="text-gray-600 mb-8">{paper.title} — {paper.marking_scheme.length} questions</p>
+    <div style={{ maxWidth: '48rem', margin: '0 auto' }}>
+      <Reveal>
+        <h1 className="display" style={{ marginBottom: 4 }}>Submit Answers</h1>
+        <p className="caption" style={{ marginBottom: 24 }}>{paper.title} — {paper.marking_scheme.length} questions</p>
+      </Reveal>
 
-      <form onSubmit={handleSubmit} className="card space-y-6">
-        {error && <div className="bg-red-50 text-red-600 p-4 rounded-lg">{error}</div>}
+      <Reveal delay={60}>
+        <form onSubmit={handleSubmit} className="card" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+          {error && <div className="banner banner-error" role="alert">{error}</div>}
 
-        <div>
-          <label className="label">Answer Sheet Images (max 10)</label>
-          <input
-            type="file"
-            id="images"
-            accept="image/*"
-            multiple
-            onChange={handleImageChange}
-            className="input"
-          />
-          {images.length > 0 && (
-            <div className="mt-4 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3">
-              {images.map((img, i) => (
-                <div key={i} className="relative aspect-square border border-gray-200 rounded-lg overflow-hidden">
-                  <img src={URL.createObjectURL(img)} alt={`Answer ${i + 1}`} className="w-full h-full object-cover" />
-                  <button
-                    type="button"
-                    onClick={() => removeImage(i)}
-                    className="absolute top-1 right-1 bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-700"
-                  >
-                    ×
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-          <p className="text-sm text-gray-500 mt-2">{images.length}/10 images</p>
-        </div>
+          <div>
+            <label className="label" htmlFor="images">Photos of your answer sheet</label>
+            <input
+              type="file"
+              id="images"
+              accept="image/*"
+              multiple
+              onChange={handleImageChange}
+              className="input"
+            />
+            <p className="caption" style={{ marginTop: 6 }}>{images.length} of 10 photos</p>
+            {images.length > 0 && (
+              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3" style={{ marginTop: 12 }}>
+                {images.map((img, i) => (
+                  <Reveal key={`${img.name}-${i}`} delay={Math.min(i, 6) * 40}>
+                    <div className="thumb">
+                      <img src={URL.createObjectURL(img)} alt={`Answer page ${i + 1}`} />
+                      <button
+                        type="button"
+                        onClick={() => removeImage(i)}
+                        className="thumb-remove"
+                        aria-label={`Remove photo ${i + 1}`}
+                      >
+                        ×
+                      </button>
+                    </div>
+                  </Reveal>
+                ))}
+              </div>
+            )}
+          </div>
 
-        <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
-          <button type="button" onClick={saveDraft} className="btn-secondary" disabled={images.length === 0}>
-            Save Draft
-          </button>
-          <button type="submit" disabled={submitting || images.length === 0} className="btn-primary">
-            {submitting ? 'Submitting...' : 'Submit Answer Sheet'}
-          </button>
-        </div>
-      </form>
+          <div className="flex justify-end gap-3" style={{ paddingTop: 12, borderTop: '1px solid var(--hairline)' }}>
+            <button type="button" onClick={saveDraft} className="btn-secondary" disabled={images.length === 0}>
+              Save Draft
+            </button>
+            <button type="submit" disabled={submitting || images.length === 0} className="btn-primary">
+              {submitting ? 'Submitting…' : 'Submit'}
+            </button>
+          </div>
+        </form>
+      </Reveal>
 
       {draftLoaded && (
-        <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg text-green-800">
-          Draft loaded from local storage. You can continue editing or submit.
-        </div>
+        <Reveal delay={120}>
+          <div className="banner banner-success" style={{ marginTop: 16 }} role="status">
+            Draft restored from this device — review the photos, then submit.
+          </div>
+        </Reveal>
       )}
     </div>
   )

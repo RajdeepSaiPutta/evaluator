@@ -43,6 +43,10 @@ export type MarkingSchemeQuestion = {
   model_answer: string
 }
 
+export type GradeProvider = 'groq' | 'local'
+
+export const LOCAL_MODEL_URL = import.meta.env.VITE_LOCAL_MODEL_URL || 'http://localhost:8000'
+
 export type AnswerSheet = {
   id: string
   question_paper_id: string
@@ -52,6 +56,7 @@ export type AnswerSheet = {
   ai_grade: GradeResult | null
   teacher_grade: GradeResult | null
   teacher_comment: string | null
+  grading_provider: GradeProvider | null
   final_grade: GradeResult
   graded_at: string | null
   created_at: string
@@ -263,6 +268,70 @@ export async function gradeAnswerSheet(sheetId: string): Promise<GradeResult> {
   })
   if (error) throw error
   return data
+}
+
+export async function checkLocalModel(): Promise<boolean> {
+  try {
+    const res = await fetch(`${LOCAL_MODEL_URL}/health`)
+    if (!res.ok) return false
+    const data = await res.json()
+    return data.status === 'ok' && data.moe_loaded === true
+  } catch {
+    return false
+  }
+}
+
+export async function gradeAnswerSheetLocal(sheetId: string): Promise<GradeResult> {
+  const { data: sheet, error: sheetError } = await supabase
+    .from('answer_sheets')
+    .select('*, question_papers(*)')
+    .eq('id', sheetId)
+    .single()
+  if (sheetError || !sheet) throw new Error('Sheet not found')
+  if (sheet.status !== 'pending') throw new Error('Sheet already graded')
+
+  const paper = sheet.question_papers as QuestionPaper
+  const base = supabaseUrl.replace(/\/$/, '')
+  const questionImages = (paper.image_paths || []).map(
+    (p: string) => `${base}/storage/v1/object/public/question-papers/${p}`
+  )
+  const answerImages = (sheet.image_paths || []).map(
+    (p: string) => `${base}/storage/v1/object/public/answer-sheets/${p}`
+  )
+
+  await supabase.from('answer_sheets').update({ status: 'grading' }).eq('id', sheetId)
+
+  try {
+    const res = await fetch(`${LOCAL_MODEL_URL}/grade-sheet`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        marking_scheme: paper.marking_scheme,
+        question_images: questionImages,
+        answer_images: answerImages,
+      }),
+    })
+    if (!res.ok) {
+      const err = await res.text()
+      throw new Error(`Local model error: ${res.status} ${err}`)
+    }
+    const gradeResult = (await res.json()) as GradeResult
+
+    const { error: updateError } = await supabase
+      .from('answer_sheets')
+      .update({
+        ai_grade: gradeResult,
+        grading_provider: 'local',
+        status: 'graded',
+        graded_at: new Date().toISOString(),
+      })
+      .eq('id', sheetId)
+    if (updateError) throw updateError
+    return gradeResult
+  } catch (err) {
+    await supabase.from('answer_sheets').update({ status: 'pending' }).eq('id', sheetId)
+    throw err
+  }
 }
 
 export async function updateTeacherGrade(

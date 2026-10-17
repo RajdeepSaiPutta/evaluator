@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
-import { type QuestionPaper } from '../../lib/supabase'
+import { supabase, type QuestionPaper } from '../../lib/supabase'
 import { openDB, DBSchema, IDBPDatabase } from 'idb'
+import { LoadingState, Reveal } from '../../ui/motion'
 
 interface DraftDBSchema extends DBSchema {
   drafts: {
@@ -134,63 +135,81 @@ export function StudentDraft() {
     }
   }
 
-  if (loading) return <div className="flex items-center justify-center h-64">Loading...</div>
-  if (!paper) return <div className="text-center py-12">Question paper not found</div>
+  if (loading) {
+    return (
+      <div>
+        <Reveal>
+          <h1 className="display" style={{ marginBottom: 4 }}>Draft</h1>
+          <p className="caption" style={{ marginBottom: 24 }}>Loading…</p>
+        </Reveal>
+        <LoadingState rows={2} />
+      </div>
+    )
+  }
+  if (!paper) {
+    return (
+      <div className="text-center" style={{ padding: '4rem 0' }}>
+        <h1 className="title-2" style={{ marginBottom: 8 }}>Paper not found</h1>
+        <p className="caption">Check the link your teacher shared.</p>
+      </div>
+    )
+  }
 
   return (
-    <div className="max-w-3xl mx-auto">
-      <div className="flex justify-between items-center mb-8">
-        <div>
-          <Link to="/student/dashboard" className="btn-ghost mb-2 inline-block">← Back</Link>
-          <h1 className="text-3xl font-bold text-gray-900">Draft: {paper.title}</h1>
-        </div>
-      </div>
+    <div style={{ maxWidth: '48rem', margin: '0 auto' }}>
+      <Reveal>
+        <Link to="/student/dashboard" className="btn-ghost row-press" style={{ marginBottom: 8, paddingLeft: 0 }}>‹ Submissions</Link>
+        <h1 className="display" style={{ marginBottom: 4 }}>Draft</h1>
+        <p className="caption" style={{ marginBottom: 24 }}>{paper.title} · saved on this device</p>
+      </Reveal>
 
-      <div className="card space-y-6">
-        <div>
-          <label className="label">Answer Sheet Images (max 10)</label>
-          <input
-            type="file"
-            id="images"
-            accept="image/*"
-            multiple
-            onChange={handleImageChange}
-            className="input"
-          />
-          {images.length > 0 && (
-            <div className="mt-4 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3">
-              {images.map((img, i) => (
-                <div key={i} className="relative aspect-square border border-gray-200 rounded-lg overflow-hidden">
-                  <img src={URL.createObjectURL(img)} alt={`Answer ${i + 1}`} className="w-full h-full object-cover" />
-                  <button
-                    type="button"
-                    onClick={() => removeImage(i)}
-                    className="absolute top-1 right-1 bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-700"
-                  >
-                    ×
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-          <p className="text-sm text-gray-500 mt-2">{images.length}/10 images</p>
-        </div>
+      <Reveal delay={60}>
+        <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+          <div>
+            <label className="label" htmlFor="images">Photos of your answer sheet</label>
+            <input
+              type="file"
+              id="images"
+              accept="image/*"
+              multiple
+              onChange={handleImageChange}
+              className="input"
+            />
+            <p className="caption" style={{ marginTop: 6 }}>{images.length} of 10 photos</p>
+            {images.length > 0 && (
+              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3" style={{ marginTop: 12 }}>
+                {images.map((img, i) => (
+                  <Reveal key={`${img.name}-${i}`} delay={Math.min(i, 6) * 40}>
+                    <div className="thumb">
+                      <img src={URL.createObjectURL(img)} alt={`Answer page ${i + 1}`} />
+                      <button
+                        type="button"
+                        onClick={() => removeImage(i)}
+                        className="thumb-remove"
+                        aria-label={`Remove photo ${i + 1}`}
+                      >
+                        ×
+                      </button>
+                    </div>
+                  </Reveal>
+                ))}
+              </div>
+            )}
+          </div>
 
-        <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
-          <button onClick={clearDraft} className="btn-danger" disabled={images.length === 0}>
-            Clear Draft
-          </button>
-          <button onClick={saveDraft} disabled={saving || images.length === 0} className="btn-secondary">
-            {saving ? 'Saving...' : 'Save Draft'}
-          </button>
-          <Link to={`/student/submit/${paperId}`} className="btn-primary">
-            Continue to Submit
-          </Link>
+          <div className="flex flex-wrap justify-end gap-3" style={{ paddingTop: 12, borderTop: '1px solid var(--hairline)' }}>
+            <button onClick={clearDraft} className="btn-danger" disabled={images.length === 0}>
+              Clear Draft
+            </button>
+            <button onClick={saveDraft} disabled={saving || images.length === 0} className="btn-secondary">
+              {saving ? 'Saving…' : 'Save Draft'}
+            </button>
+            <Link to={`/student/submit/${paperId}`} className="btn-primary">
+              Continue to Submit
+            </Link>
+          </div>
         </div>
-      </div>
+      </Reveal>
     </div>
   )
 }
-
-// Need supabase import
-import { supabase } from '../../lib/supabase'

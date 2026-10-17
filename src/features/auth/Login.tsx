@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from './AuthContext'
+import { AuthShell } from './AuthShell'
 
 export function Login() {
   const [email, setEmail] = useState('')
@@ -25,58 +26,49 @@ export function Login() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
+    <AuthShell title="Welcome back" subtitle="Sign in to continue grading">
+      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        {error && <div className="banner banner-error" role="alert">{error}</div>}
         <div>
-          <h2 className="text-center text-3xl font-bold text-gray-900">Sign in to your account</h2>
+          <label htmlFor="email" className="label">Email</label>
+          <input
+            id="email"
+            name="email"
+            type="email"
+            autoComplete="email"
+            required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="input"
+            placeholder="you@example.com"
+          />
         </div>
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          {error && <div className="bg-red-50 text-red-600 p-4 rounded-lg text-sm">{error}</div>}
-          <div className="space-y-4">
-            <div>
-              <label htmlFor="email" className="label">Email address</label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                autoComplete="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="input"
-                placeholder="you@example.com"
-              />
-            </div>
-            <div>
-              <label htmlFor="password" className="label">Password</label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="current-password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="input"
-                placeholder="••••••••"
-              />
-            </div>
-          </div>
-          <div>
-            <button type="submit" disabled={loading} className="btn-primary w-full">
-              {loading ? 'Signing in...' : 'Sign in'}
-            </button>
-          </div>
-        </form>
-        <div className="text-center">
-          <p className="text-sm text-gray-600">
-            Don't have an account? <Link to="/signup" className="text-blue-600 hover:text-blue-500 font-medium">Sign up</Link>
-          </p>
-          <p className="text-sm text-gray-600 mt-2">
-            <Link to="/reset-password" className="text-blue-600 hover:text-blue-500 font-medium">Forgot password?</Link>
-          </p>
+        <div>
+          <label htmlFor="password" className="label">Password</label>
+          <input
+            id="password"
+            name="password"
+            type="password"
+            autoComplete="current-password"
+            required
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="input"
+            placeholder="••••••••"
+          />
         </div>
+        <button type="submit" disabled={loading} className="btn-primary" style={{ width: '100%' }}>
+          {loading ? 'Signing in…' : 'Sign in'}
+        </button>
+      </form>
+      <div className="text-center" style={{ marginTop: 20 }}>
+        <p className="caption">
+          New here? <Link to="/signup" style={{ color: 'var(--blue)', fontWeight: 600 }}>Create an account</Link>
+        </p>
+        <p className="caption" style={{ marginTop: 6 }}>
+          <Link to="/reset-password" style={{ color: 'var(--blue)', fontWeight: 600 }}>Forgot password?</Link>
+        </p>
       </div>
-    </div>
+    </AuthShell>
   )
 }
