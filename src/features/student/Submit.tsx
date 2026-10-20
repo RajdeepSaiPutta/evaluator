@@ -170,7 +170,7 @@ export function StudentSubmit() {
     <div style={{ maxWidth: '48rem', margin: '0 auto' }}>
       <Reveal>
         <h1 className="display" style={{ marginBottom: 4 }}>Submit Answers</h1>
-        <p className="caption" style={{ marginBottom: 24 }}>{paper.title} — {paper.marking_scheme.length} questions</p>
+        <p className="caption" style={{ marginBottom: 24 }}>{paper.title}: {paper.marking_scheme.length} questions</p>
       </Reveal>
 
       <Reveal delay={60}>
@@ -223,7 +223,7 @@ export function StudentSubmit() {
       {draftLoaded && (
         <Reveal delay={120}>
           <div className="banner banner-success" style={{ marginTop: 16 }} role="status">
-            Draft restored from this device — review the photos, then submit.
+            Draft restored from this device. Review the photos, then submit.
           </div>
         </Reveal>
       )}

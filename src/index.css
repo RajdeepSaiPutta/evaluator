@@ -2,11 +2,8 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ————————————————————————————————
-   Apple-style design foundations
-   System type, translucent materials, instant press feedback,
-   springs (via ui/motion), reduced-motion cross-fades.
-   ———————————————————————————————— */
+/* design foundations: system type, translucent materials, instant press
+   feedback, springs (via ui/motion), reduced-motion cross-fades */
 
 :root {
   --bg: #f5f5f7;
@@ -56,7 +53,7 @@ body {
   min-height: 100vh;
 }
 
-/* —— Typography: tracking is size-specific, never fixed —— */
+/* typography: tracking depends on size, never one fixed value */
 .display {
   font-weight: 700;
   font-size: clamp(1.75rem, 4vw, 2.5rem);
@@ -95,7 +92,7 @@ body {
   font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
 }
 
-/* —— Translucent chrome: content scrolls under —— */
+/* translucent chrome: content scrolls under it */
 .toolbar {
   position: sticky;
   top: 0;
@@ -111,7 +108,7 @@ body {
   box-shadow: 0 8px 24px -12px rgba(0, 0, 0, 0.18);
 }
 
-/* —— Buttons: feedback on press-down, instant —— */
+/* buttons: instant feedback on press-down */
 .btn {
   @apply inline-flex items-center justify-center gap-2 font-medium select-none focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
   border-radius: 999px;
@@ -164,7 +161,7 @@ body {
   background: rgba(0, 113, 227, 0.08);
 }
 
-/* —— Inputs —— */
+/* inputs */
 .input {
   @apply w-full;
   border-radius: var(--r-sm);
@@ -195,7 +192,7 @@ body {
   letter-spacing: 0.004em;
 }
 
-/* —— Cards: light translucent surface, never stacked on another —— */
+/* cards: light translucent surface, never stack one on another */
 .card {
   background: var(--surface-solid);
   border-radius: var(--r-lg);
@@ -210,7 +207,7 @@ body {
   padding: 1rem;
 }
 
-/* —— Pills / badges —— */
+/* pills / badges */
 .pill {
   @apply inline-flex items-center gap-1;
   border-radius: 999px;
@@ -235,7 +232,7 @@ body {
 .badge-error { @apply pill-error; }
 .badge-info { @apply pill-info; }
 
-/* —— List rows: 1:1 press feedback, chevron wayfinding —— */
+/* list rows: press feedback follows the finger, chevron shows the row opens */
 .row-press {
   transition: transform 100ms ease-out, background-color 150ms ease;
 }
@@ -244,7 +241,7 @@ body {
   transform: scale(0.99);
 }
 
-/* —— Segmented control (the Apple idiom for 2-3 exclusive options) —— */
+/* segmented control: 2-3 exclusive options */
 .segmented {
   display: inline-flex;
   background: rgba(0, 0, 0, 0.06);
@@ -275,7 +272,7 @@ body {
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
 }
 
-/* —— Sheet (bottom drawer): slides up in, dismisses down —— */
+/* sheet (bottom drawer): slides up in, dismisses down */
 .scrim {
   position: fixed;
   inset: 0;
@@ -308,7 +305,7 @@ body {
   margin: 0.6rem auto 0;
 }
 
-/* —— Skeleton shimmer (status feedback while loading) —— */
+/* skeleton shimmer: status feedback while loading */
 @keyframes shimmer {
   0% { background-position: -400px 0; }
   100% { background-position: 400px 0; }
@@ -321,7 +318,7 @@ body {
   animation: shimmer 1.4s ease infinite;
 }
 
-/* —— Banners: status / warning / error feedback kinds —— */
+/* banners: status, warning and error kinds */
 .banner {
   border-radius: var(--r-md);
   padding: 0.8rem 1rem;
@@ -333,7 +330,7 @@ body {
 .banner-success { background: var(--green-bg); color: var(--green); }
 .banner-info { background: var(--blue-bg); color: var(--blue-dark); }
 
-/* —— Thumbnails —— */
+/* thumbnails */
 .thumb {
   position: relative;
   aspect-ratio: 1;
@@ -374,7 +371,7 @@ body {
   transform: scale(0.9);
 }
 
-/* —— Floating role pill —— */
+/* floating role pill */
 .role-pill {
   position: fixed;
   right: 1.25rem;
@@ -392,7 +389,7 @@ body {
   padding: 0.5rem 0.5rem 0.5rem 1rem;
 }
 
-/* —— Reduced motion: cross-fade, never slide/spring —— */
+/* reduced motion: cross-fade instead of slide or spring */
 @media (prefers-reduced-motion: reduce) {
   .skeleton {
     animation: none;

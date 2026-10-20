@@ -19,7 +19,7 @@ export function Layout() {
 
   const handleSignOut = async () => {
     await signOut()
-    // No login screen yet — return to the start of the app instead.
+    // No login screen yet, so return to the start of the app.
     navigate('/')
   }
 

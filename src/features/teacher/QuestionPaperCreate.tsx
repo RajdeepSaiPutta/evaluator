@@ -93,7 +93,7 @@ export function QuestionPaperCreate() {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               className="input title-3"
-              placeholder="e.g. Midterm Exam — Mathematics"
+              placeholder="e.g. Midterm Exam: Mathematics"
             />
           </div>
 
@@ -130,7 +130,7 @@ export function QuestionPaperCreate() {
                     </div>
                   </div>
                   <div style={{ marginBottom: 12 }}>
-                    <label className="label">Rubric — how to grade this question</label>
+                    <label className="label">Rubric: how to grade this question</label>
                     <textarea
                       value={q.rubric_text}
                       onChange={(e) => updateQuestion(i, 'rubric_text', e.target.value)}
@@ -156,7 +156,7 @@ export function QuestionPaperCreate() {
           </div>
 
           <div>
-            <label className="label" htmlFor="images">Paper files — images, PDF, Word or PowerPoint</label>
+            <label className="label" htmlFor="images">Paper files: images, PDF, Word or PowerPoint</label>
             <input
               type="file"
               id="images"
@@ -165,7 +165,7 @@ export function QuestionPaperCreate() {
               onChange={handleImageChange}
               className="input"
             />
-            <p className="caption" style={{ marginTop: 6 }}>PNG, JPG, WEBP, PDF, DOC, DOCX, PPT, PPTX — up to 20MB each</p>
+            <p className="caption" style={{ marginTop: 6 }}>PNG, JPG, WEBP, PDF, DOC, DOCX, PPT, PPTX (up to 20MB each)</p>
             {images.length > 0 && (
               <div className="mt-2 flex flex-wrap gap-2" style={{ marginTop: 10 }}>
                 {images.map((f, i) => {

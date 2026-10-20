@@ -18,7 +18,7 @@ export function QuestionPaperDetail() {
   const [sheets, setSheets] = useState<AnswerSheetWithRelations[]>([])
   const [loading, setLoading] = useState(true)
   const [grading, setGrading] = useState<string | null>(null)
-  // Groq (cloud) option hidden for now — local MoE only.
+  // Groq (cloud) option hidden for now; local MoE only.
   const provider: GradeProvider = 'local'
   const [localAvailable, setLocalAvailable] = useState<boolean | null>(null)
   const [reviewing, setReviewing] = useState<string | null>(null)
@@ -59,7 +59,7 @@ export function QuestionPaperDetail() {
       await loadData()
     } catch (err) {
       console.error(err)
-      alert(provider === 'local' ? 'Local grading failed — is the model server running on http://localhost:8000?' : 'Grading failed')
+      alert(provider === 'local' ? 'Local grading failed: is the model server running on http://localhost:8000?' : 'Grading failed')
     } finally {
       setGrading(null)
     }
@@ -160,7 +160,7 @@ export function QuestionPaperDetail() {
             </div>
           </div>
           {sheets.length === 0 ? (
-            <p className="caption text-center" style={{ padding: '2rem 0' }}>No submissions yet — share the paper link with students.</p>
+            <p className="caption text-center" style={{ padding: '2rem 0' }}>No submissions yet. Share the paper link with students.</p>
           ) : (
             <div className="space-y-4" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {sheets.map((sheet) => (

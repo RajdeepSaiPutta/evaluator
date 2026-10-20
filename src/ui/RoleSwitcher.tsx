@@ -1,6 +1,6 @@
 import { useAuth } from '../features/auth/AuthContext'
 
-/** Floating glass pill — test-role control, translucent material over content. */
+/** Floating glass pill for switching the test role. */
 export function RoleSwitcher() {
   const { profile, switchRole } = useAuth()
   return (

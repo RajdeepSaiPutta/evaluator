@@ -15,7 +15,7 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
 export function App() {
   return (
     <Routes>
-      {/* Login screen not wired yet — app opens straight into the dashboard. */}
+      {/* Login screen not wired yet; the app opens straight into the dashboard. */}
       <Route element={<PublicRoute><Layout /></PublicRoute>}>
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
         <Route path="/dashboard" element={<TeacherDashboard />} />

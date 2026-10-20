@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import { Reveal } from '../../ui/motion'
 
-/** Centered glass card for auth — calm surface, one task per screen (§16). */
+/** Centered glass card for auth screens. */
 export function AuthShell({ title, subtitle, children }: { title: string; subtitle?: string; children: ReactNode }) {
   return (
     <div

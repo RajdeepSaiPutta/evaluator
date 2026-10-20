@@ -1,10 +1,8 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode, type CSSProperties } from 'react'
 
-/* ————————————————————————————————————————————————
-   Spring motion system (Apple §3–5: interruptible,
-   velocity-aware, animate from the presentation value).
-   Hand-rolled: no dependencies, critically damped default.
-   ———————————————————————————————————————————————— */
+/* spring motion system: interruptible and velocity-aware. each spring
+   animates from its current on-screen value.
+   hand-rolled, no dependencies, critically damped by default. */
 
 export function useReducedMotion(): boolean {
   const [reduced, setReduced] = useState(
@@ -25,8 +23,8 @@ interface SpringOpts {
   precision?: number
 }
 
-/** Spring toward `target`. Re-target any time — motion continues from the
- *  live on-screen value with carried velocity (never jumps, never locks out). */
+/** Spring toward `target`. You can re-target any time: motion continues from
+ *  the live on-screen value and keeps its velocity. */
 export function useSpring(target: number, opts: SpringOpts = {}): number {
   const { stiffness = 170, damping = 26, precision = 0.05 } = opts
   const reduced = useReducedMotion()
@@ -68,7 +66,7 @@ export function useSpring(target: number, opts: SpringOpts = {}): number {
   return value
 }
 
-/** Fade + rise entrance on mount. Same path every navigation (symmetric). */
+/** Fade and rise entrance on mount, same path every navigation. */
 export function Reveal({
   children,
   delay = 0,
@@ -106,7 +104,7 @@ export function Reveal({
   )
 }
 
-/** Stagger children entrances by `step` ms — telegraphs where content lands (§8). */
+/** Stagger child entrances by `step` ms so content lands in sequence. */
 export function Stagger({ children, step = 60 }: { children: ReactNode; step?: number }) {
   const items = useMemo(() => (Array.isArray(children) ? children : [children]), [children])
   return (
@@ -120,13 +118,13 @@ export function Stagger({ children, step = 60 }: { children: ReactNode; step?: n
   )
 }
 
-/** Animated number — continuous feedback while scores land (§1). */
+/** Animated number that keeps feeding back while scores land. */
 export function CountUp({ value, decimals = 0 }: { value: number; decimals?: number }) {
   const v = useSpring(value, { stiffness: 120, damping: 24 })
   return <>{v.toFixed(decimals)}</>
 }
 
-/** Shimmer placeholders — status feedback while loading (§16). */
+/** Shimmer placeholders for loading states. */
 export function Skeleton({ className = '', style }: { className?: string; style?: CSSProperties }) {
   return <div className={`skeleton ${className}`} style={style} aria-hidden="true" />
 }
@@ -145,7 +143,7 @@ export function LoadingState({ rows = 3 }: { rows?: number }) {
   )
 }
 
-/** Segmented control — the Apple idiom for 2–3 exclusive options. */
+/** Segmented control for 2-3 exclusive options. */
 export function Segmented<T extends string>({
   options,
   value,
@@ -176,7 +174,7 @@ export function Segmented<T extends string>({
   )
 }
 
-/** Bottom sheet: slides up in, dismisses down the same path (§7). */
+/** Bottom sheet: slides up in, dismisses down the same path. */
 export function Sheet({
   onClose,
   children,
@@ -192,7 +190,7 @@ export function Sheet({
     const t = window.setTimeout(() => setOpen(true), 10)
     return () => window.clearTimeout(t)
   }, [])
-  // Bouncier spring: the open gesture carries momentum (§4 table: drawer 0.8/0.3)
+  // bouncier spring: the open gesture carries momentum
   const y = useSpring(open ? 0 : 60, { stiffness: 210, damping: 26 })
   const scrim = useSpring(open ? 1 : 0, { stiffness: 260, damping: 30 })
 

@@ -39,7 +39,7 @@ export function LocalGradeDemo() {
       if (!r.ok) throw new Error(`HTTP ${r.status}`)
       setHealth(await r.json())
     } catch (e) {
-      setHealthErr(`Model server unreachable at ${MODEL_URL} — is it running? (${String(e)})`)
+      setHealthErr(`Model server unreachable at ${MODEL_URL}: is it running? (${String(e)})`)
       setHealth(null)
     }
   }
@@ -213,7 +213,7 @@ export function LocalGradeDemo() {
       )}
 
       <p className="caption text-center" style={{ marginTop: 20 }}>
-        No account needed — this page talks directly to the model server.
+        No account needed. This page talks directly to the model server.
       </p>
     </div>
   )
