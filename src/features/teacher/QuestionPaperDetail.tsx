@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom'
 import { useAuth } from '../../features/auth/AuthContext'
 import { getQuestionPapers, getAnswerSheetsForTeacher, gradeAnswerSheet, gradeAnswerSheetLocal, checkLocalModel, updateTeacherGrade, type QuestionPaper, type AnswerSheetWithRelations, type GradeResult, type GradeProvider } from '../../lib/supabase'
 import { CountUp, LoadingState, Reveal, Sheet, Stagger } from '../../ui/motion'
+import { ClassAnalysis } from './ClassAnalysis'
 
 function statusPill(status: string) {
   if (status === 'graded') return 'pill-success'
@@ -147,6 +148,20 @@ export function QuestionPaperDetail() {
             </Stagger>
           </div>
         </div>
+      </Reveal>
+
+      <Reveal delay={90}>
+        <ClassAnalysis
+          paperTotal={paperTotal}
+          sheets={sheets}
+          onModerated={(sheetId, grade) =>
+            setSheets((prev) => prev.map((s) =>
+              s.id === sheetId
+                ? { ...s, final_grade: grade, teacher_grade: grade, status: 'reviewed' as const }
+                : s,
+            ))
+          }
+        />
       </Reveal>
 
       <Reveal delay={120}>
