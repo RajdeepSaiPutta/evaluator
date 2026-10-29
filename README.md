@@ -37,4 +37,10 @@ supabase credentials go in `.env` (see `.env.example`). the local grading engine
 
 ## releases
 
-`.github/workflows/release.yml` builds installers for all three platforms on a `v*` tag: `.deb` / `.rpm` / `.appimage` for linux, `.msi` / nsis `.exe` for windows, and a universal `.dmg` (intel + apple silicon) for macos. typecheck and unit tests run before anything is bundled.
+the app builds for three platforms from `.github/workflows/release.yml` on a `v*` tag:
+
+- linux — `.deb`, `.rpm`, `.appimage`
+- windows — `.msi`, nsis `.exe`
+- macos — universal `.dmg` (intel + apple silicon)
+
+typecheck and unit tests run before anything is bundled.
