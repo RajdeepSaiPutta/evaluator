@@ -25,6 +25,7 @@ export function LocalGradeDemo() {
   const [rubric, setRubric] = useState('Correct factorization and both roots with verification')
   const [modelAnswer, setModelAnswer] = useState('x = 3 or x = 2')
   const [maxPoints, setMaxPoints] = useState('5')
+  const [examContext, setExamContext] = useState('')
   const [question, setQuestion] = useState('Solve: x^2 - 5x + 6 = 0')
   const [answer, setAnswer] = useState('(x - 3)(x - 2) = 0, so x = 3 or x = 2. Checked: 9 - 15 + 6 = 0.')
   const [grading, setGrading] = useState(false)
@@ -67,6 +68,8 @@ export function LocalGradeDemo() {
           ],
           question_text: question,
           answer_text: answer,
+          // empty string means none; the grader stays board-agnostic without it
+          exam_context: examContext.trim() || undefined,
         }),
       })
       if (!r.ok) throw new Error(`HTTP ${r.status}: ${await r.text()}`)
@@ -128,6 +131,15 @@ export function LocalGradeDemo() {
       <Reveal delay={100}>
         <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: 16, marginBottom: 20 }}>
           <h2 className="title-2">Marking scheme · Q1</h2>
+          <label className="block">
+            <span className="label">Exam context · optional</span>
+            <input
+              className="input"
+              value={examContext}
+              onChange={(e) => setExamContext(e.target.value)}
+              placeholder="e.g. CBSE Class 10 Mathematics, or leave blank for any exam"
+            />
+          </label>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <label className="block md:col-span-2">
               <span className="label">Rubric</span>
