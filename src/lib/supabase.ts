@@ -43,7 +43,7 @@ export type MarkingSchemeQuestion = {
   model_answer: string
 }
 
-export type GradeProvider = 'groq' | 'local'
+export type GradeProvider = 'local'
 
 export const LOCAL_MODEL_URL = import.meta.env.VITE_LOCAL_MODEL_URL || 'http://localhost:8000'
 

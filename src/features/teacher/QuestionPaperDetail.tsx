@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useAuth } from '../../features/auth/AuthContext'
-import { getQuestionPapers, getAnswerSheetsForTeacher, gradeAnswerSheet, gradeAnswerSheetLocal, checkLocalModel, updateTeacherGrade, type QuestionPaper, type AnswerSheetWithRelations, type GradeResult, type GradeProvider } from '../../lib/supabase'
+import { getQuestionPapers, getAnswerSheetsForTeacher, gradeAnswerSheetLocal, checkLocalModel, updateTeacherGrade, type QuestionPaper, type AnswerSheetWithRelations, type GradeResult } from '../../lib/supabase'
 import { CountUp, LoadingState, Reveal, Sheet, Stagger } from '../../ui/motion'
 import { ClassAnalysis } from './ClassAnalysis'
 
@@ -19,8 +19,6 @@ export function QuestionPaperDetail() {
   const [sheets, setSheets] = useState<AnswerSheetWithRelations[]>([])
   const [loading, setLoading] = useState(true)
   const [grading, setGrading] = useState<string | null>(null)
-  // Groq (cloud) option hidden for now; local MoE only.
-  const provider: GradeProvider = 'local'
   const [localAvailable, setLocalAvailable] = useState<boolean | null>(null)
   const [reviewing, setReviewing] = useState<string | null>(null)
   const [reviewGrade, setReviewGrade] = useState<GradeResult | null>(null)
@@ -52,15 +50,11 @@ export function QuestionPaperDetail() {
   const handleGrade = async (sheetId: string) => {
     setGrading(sheetId)
     try {
-      if (provider === 'local') {
-        await gradeAnswerSheetLocal(sheetId)
-      } else {
-        await gradeAnswerSheet(sheetId)
-      }
+      await gradeAnswerSheetLocal(sheetId)
       await loadData()
     } catch (err) {
       console.error(err)
-      alert(provider === 'local' ? 'Local grading failed: is the model server running on http://localhost:8000?' : 'Grading failed')
+      alert('Local grading failed: is the model server running on http://localhost:8000?')
     } finally {
       setGrading(null)
     }
